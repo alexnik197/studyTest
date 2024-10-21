@@ -30,12 +30,12 @@
         </div>
 
         <div v-if="selectedBlockTitle == 2" class="study-subj">
-          <textarea v-model="oneChoice[0].description" placeholder="Описание задачи" contenteditable />
+          <textarea v-model="oneChoice.description" placeholder="Описание задачи" contenteditable />
           <div class="choice-list">
 
-            <div v-for="(choice, idx) in oneChoice.slice(1)" class="choice-task" :key="idx">
+            <div v-for="(choice, idx) in oneChoice.tasks" class="choice-task" :key="idx">
               <input type="radio" name="check-test--one" :id="idx" :value="choice.value"
-                v-model="oneChoice[0].rightChoice" />
+                v-model="oneChoice.rightChoice" />
               <input type="text" v-model="choice.description" />
             </div>
             <button @click.prevent.stop=addOneChoice()>+</button>
@@ -45,18 +45,21 @@
         <div v-if="selectedBlockTitle == 3" class="study-subj">
           <textarea v-model="multiChoice.description" placeholder="Описание задачи" contenteditable />
           <div class="choice-list">
-            <div class="choice-task">
-              <input type="checkbox" name="check-test--multi" value="1">
-              <input class="choice-text" type="text">
+
+            <div v-for="(choice, idx) in multiChoice.tasks" class="choice-task" :key="idx">
+              <input type="checkbox" :id="'checkbox-' + idx" :value="choice.value" v-model="multiChoice.rightChoice" />
+              <input type="text" v-model="choice.description" />
             </div>
-            <div class="choice-task">
-              <input type="checkbox" name="check-test--multi" value="1">
-              <input class="choice-text" type="text">
-            </div>
+            <button @click.prevent.stop=addMultiChoice()>+</button>
           </div>
         </div>
-      </form>
 
+        <div v-if="selectedBlockTitle == 4" class="study-subj">
+          <textarea v-model="writeTask.description" placeholder="Описание задачи" />
+          <input v-model="writeTask.rightChoice" class="input-write" type="text" placeholder="Правильный ответ">
+        </div>
+
+      </form>
       <input v-if="selectedBlockTitle === 0 && selectedObj === 0" v-model="myStudyObj" type="text">
       <button @click="sendData">Создать</button>
     </aside>
@@ -83,6 +86,9 @@ export default {
       selectedObj: null,
       taskDescription: "",
 
+      writeTask: { description: '', rightChoice: null, },
+      writeTaskTemplate: { description: '', rightChoice: null, },
+
       studyObj: [
         { text: "Свой вариант", value: 0 },
         { text: "Математика", value: 1 },
@@ -95,15 +101,21 @@ export default {
         { text: "Описание", value: 1 },
         { text: "Задача с выбором одного варианта", value: 2 },
         { text: "Задача с выбором вариантов", value: 3 },
+        { text: "Задача с написанием ответа", value: 4 },
       ],
 
-      oneChoice: [{ description: "", rightChoice: null }, { value: 0, description: '' }, { value: 1, description: '' }],
+      choiceTemplate: {
+        description: "", rightChoice: null, tasks: [{ value: 0, description: '' }, { value: 1, description: '' }]
+      },
+      oneChoice: {
+        description: "", rightChoice: null, tasks: [{ value: 0, description: '' }, { value: 1, description: '' }]
+      },
 
+      multiChoiceTemplate: {
+        description: "", rightChoice: null, tasks: [{ value: 0, description: '' }, { value: 1, description: '' }]
+      },
       multiChoice: {
-        description: "",
-        rightChoice: [],
-        variant1: "",
-        variant2: ""
+        description: "", rightChoice: [], tasks: [{ value: 0, description: '' }, { value: 1, description: '' }]
       },
 
       myStudyObj: "",
@@ -128,20 +140,38 @@ export default {
     sendData() {
       if (this.selectedBlockTitle === 0) {
         this.taskList.push({ title: this.selectedBlockTitle, info: this.selectedTitle });
+        this.selectedBlockTitle = null;
+        this.selectedObj = null;
       }
       else if (this.selectedBlockTitle === 1) {
         this.taskList.push({ title: this.selectedBlockTitle, info: this.taskDescription });
+        this.selectedBlockTitle = null;
+        this.taskDescription = '';
       }
-
       else if (this.selectedBlockTitle === 2) {
-        console.log(this.oneChoice);
         this.taskList.push({ title: this.selectedBlockTitle, info: this.oneChoice });
+        this.selectedBlockTitle = null;
+        this.oneChoice = this.choiceTemplate;
+      }
+      else if (this.selectedBlockTitle === 3) {
+        this.taskList.push({ title: this.selectedBlockTitle, info: this.multiChoice });
+        this.selectedBlockTitle = null;
+        this.multiChoice = this.multiChoiceTemplate;
+      }
+      else if (this.selectedBlockTitle === 4) {
+        this.taskList.push({ title: this.selectedBlockTitle, info: this.writeTask });
+        this.selectedBlockTitle = null;
+        this.writeTask = this.writeTaskTemplate;
       }
 
     },
     addOneChoice() {
-      const choicesNumber = this.oneChoice.length;
-      this.oneChoice.push({ value: choicesNumber, description: "" });
+      const choicesNumber = this.oneChoice.tasks.length;
+      this.oneChoice.tasks.push({ value: choicesNumber, description: "" });
+    },
+    addMultiChoice() {
+      const choicesNumber = this.multiChoice.tasks.length;
+      this.multiChoice.tasks.push({ value: choicesNumber, description: "" });
     },
     changeTheme() {
       this.isDarkTheme = !this.isDarkTheme;
@@ -260,7 +290,7 @@ ul {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.5rem;
   padding: 0;
   list-style-type: none;
 }
@@ -320,6 +350,10 @@ button {
 
 .choice-text {
   border-radius: 5px;
+}
+
+.input-write {
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
